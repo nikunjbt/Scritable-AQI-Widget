@@ -1,0 +1,66 @@
+// AQI Widget with Improved 3D Text & Shadow
+const API_KEY = "YOUR_API_KEY_HERE"; // Replace with your API key
+const API_URL = "https://api.airvisual.com/v2/nearest_city";
+
+async function getAQI() {
+    let location = await Location.current();
+    let url = `${API_URL}?lat=${location.latitude}&lon=${location.longitude}&key=${API_KEY}`;
+
+    let req = new Request(url);
+    let res = await req.loadJSON();
+    
+    if (res.status === "success") {
+        return res.data;
+    } else {
+        throw new Error("Failed to fetch AQI data");
+    }
+}
+
+// Function to create widget UI
+async function createWidget(data) {
+    let widget = new ListWidget();
+    widget.backgroundColor = new Color("#E0A020"); // Gold background
+
+    // "AQI" Title
+    let title = widget.addText("AQI");
+    title.textColor = Color.black();
+    title.font = Font.boldSystemFont(30);
+    title.centerAlignText();
+
+    // AQI Value - 3D Effect
+    let aqi = data.current.pollution.aqius;
+    let font = new Font("Arial-BoldMT", 90);
+
+    // Shadow Layer (Slightly Offset for 3D)
+    let shadow = widget.addText(aqi.toString());
+    shadow.textColor = new Color("#000000", 0.4); // Slightly transparent dark shadow
+    shadow.font = font;
+    shadow.centerAlignText();
+    shadow.shadowColor = new Color("#000000");
+    shadow.shadowOffset = new Point(3, 3); // Reduce offset for better effect
+    shadow.shadowRadius = 2; // Lower blur radius for crisp shadow
+
+    // Foreground Layer (Main AQI Text)
+    let text = widget.addText(aqi.toString());
+    text.textColor = new Color("#1C1C1C"); // Dark AQI text
+    text.font = font;
+    text.centerAlignText();
+
+    // Location Name
+    let locationText = widget.addText(data.city);
+    locationText.font = Font.boldSystemFont(20);
+    locationText.textColor = Color.black();
+    locationText.centerAlignText();
+
+    return widget;
+}
+
+// Run Script
+try {
+    let data = await getAQI();
+    let widget = await createWidget(data);
+    Script.setWidget(widget);
+    Script.complete();
+} catch (error) {
+    console.error(error);
+}
